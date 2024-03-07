@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
 import {ERC4626} from "lib/solmate/src/tokens/ERC4626.sol";
@@ -11,18 +11,18 @@ contract TokenVault is ERC4626 {
 
     function _deposit(uint256 _assets) public {
         require(_assets > 0, "Zero assets deposited");
-        assetsDeposited[msg.sender] += _assets;
         deposit(_assets, msg.sender);
+        // assetsDeposited[msg.sender] += _assets;
     }
 
     function _withdraw(uint256 _shares) public {
         // checks
         require(_shares > 0, "Zero shares sent to withdraw against");
-        require(assetsDeposited[msg.sender] > 0, "No assets currently deposited");
-        require(assetsDeposited[msg.sender] >= _shares, "Not enough shares sent");
+        // require(assetsDeposited[msg.sender] > 0, "No assets currently deposited");
+        // require(assetsDeposited[msg.sender] >= _shares, "Not enough shares sent");
 
         // effects
-        assetsDeposited[msg.sender] -= _shares;
+        // assetsDeposited[msg.sender] -= _shares;
 
         // interactions
         redeem(_shares, msg.sender, msg.sender);

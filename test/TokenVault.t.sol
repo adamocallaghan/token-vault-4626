@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
@@ -64,6 +64,7 @@ contract TokenVaultTest is Test {
         assertEq(bobBalance, 889);
     }
 
+    // === NO STRATEGY ===
     function test_previewRedeem_noStrategy() public {
         depositAssetsAsBob();
 
@@ -71,6 +72,7 @@ contract TokenVaultTest is Test {
         assertEq(sharesToAssetsRedemtion, 10000); // assets back should be == shares sent (as there is no strategy to increase the underlying asset token)
     }
 
+    // === WITH STRATEGY ===
     function test_previewRedeem_withStrategy() public {
         depositAssetsAsBob();
 
@@ -79,17 +81,13 @@ contract TokenVaultTest is Test {
         vm.stopPrank();
 
         // bob: deposited 100,000 tokens (and was issued shares)
-        // alice: *directly* transferred 100,000 (i.e. was not issued shares)
+        // alice: *directly* transferred 100,000 (i.e. was not issued shares) <=== "alice" is acting in place of a DeFi strategy here!
         // TOTAL TOKENS IN CONTRACT = 200,000
 
         // 200,000 tokens / 100,000 shares = 2
 
-        console.log(vault.totalAssets());
-        console.log(vault.balanceOf(bob));
-        console.log(vault.balanceOf(alice));
-
-        uint256 sharesToAssetsRedemtion = vault.previewRedeem(10000); // how many assets do I get back fro 10,000 shares?
-        assertEq(sharesToAssetsRedemtion, 10000); // assets back should be == shares sent (as there is no strategy to increase the underlying asset token)
+        uint256 sharesToAssetsRedemtion = vault.previewRedeem(10000); // how many assets do I get back for 10,000 shares?
+        assertEq(sharesToAssetsRedemtion, 20000); // assets back should be the shares multiplied by 2 as this is
     }
 
     // === HELPERS ===
