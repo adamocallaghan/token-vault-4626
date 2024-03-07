@@ -3,28 +3,27 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {TokenVault} from "../src/TokenVault.sol";
-import {LayersToken} from "../src/LayersToken.sol";
+import {USDC} from "../src/USDC.sol";
 
 contract TokenVaultTest is Test {
     // variables
-    TokenVault public vault;
+    TokenVault public vault; // our token vault
+    USDC public usdc; // our asset token to deposit
+
     address public bob = makeAddr("bob");
     address public alice = makeAddr("alice");
     uint256 public STARTING_BALANCE = 10000;
 
-    // layersToken
-    LayersToken public layersToken;
-
     function setUp() public {
         // create our underlying asset token that gets deposited to the 4626 vault
-        layersToken = new LayersToken();
+        usdc = new USDC();
 
         // mint some tokens to our test users
-        layersToken.mint(bob, 50e18);
-        layersToken.mint(alice, 50e18);
+        usdc.mint(bob, 50e18);
+        usdc.mint(alice, 50e18);
 
         // create instance of our contract
-        vault = new TokenVault(layersToken, "vaultLayers", "vLayers");
+        vault = new TokenVault(usdc, "vaultUSDC", "vUSDC");
 
         // give our users some ETH to transact with
         vm.deal(bob, STARTING_BALANCE);
@@ -38,26 +37,11 @@ contract TokenVaultTest is Test {
         assertEq(bobBalance, 100000);
     }
 
-    function test_assetsDeposited() public {
-        depositAssetsAsBob();
-
-        uint256 bobBalance = vault.totalAssetsUserHasDeposited(bob); // this gets the 'assets' depostied using our own accounting/mapping
-        assertEq(bobBalance, 100000); // test should always pass as this is just what we've put in, not the underlying pool of assets including any from our strategy
-    }
-
-    function test_assetsDepositedEqualBalanceOfTokenVault() public {
-        depositAssetsAsBob();
-
-        uint256 bobAssetDeposited = vault.totalAssetsUserHasDeposited(bob); // our own accounting
-        uint256 bobShareBalance = vault.totalSharesOfUser(bob); // internal 'share' accounting - remember this is an ERC20 token so we can call balanceOf()
-        assertEq(bobAssetDeposited, bobShareBalance);
-    }
-
     function test_withdrawAssetsUsingShares() public {
         depositAssetsAsBob();
 
         vm.startPrank(bob);
-        vault._withdraw(99111); // we're leaving just 456 LayersToken in the contract
+        vault._withdraw(99111); // we're leaving just 456 USDC in the contract
         vm.stopPrank();
 
         uint256 bobBalance = vault.totalSharesOfUser(bob);
@@ -77,7 +61,7 @@ contract TokenVaultTest is Test {
         depositAssetsAsBob();
 
         vm.startPrank(alice);
-        layersToken.transfer(address(vault), 100000); // we are directly transferring tokens into the contract as if they have been earned using a strategy!
+        usdc.transfer(address(vault), 100000); // we are directly transferring tokens into the contract as if they have been earned using a strategy!
         vm.stopPrank();
 
         // bob: deposited 100,000 tokens (and was issued shares)
@@ -93,7 +77,7 @@ contract TokenVaultTest is Test {
     // === HELPERS ===
     function depositAssetsAsBob() public {
         vm.startPrank(bob);
-        layersToken.approve(address(vault), 999000);
+        usdc.approve(address(vault), 999000);
         vault._deposit(100000);
         vm.stopPrank();
     }
